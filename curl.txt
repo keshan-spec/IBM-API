@@ -1,0 +1,4 @@
+using curl
+
+curl -d "{ \"text\": [ \"The Model Asset Exchange is a crucial element of a developer's toolkit.\" ]}" -X POST "http://max-text-sentiment-classifier.max.us-south.c
+ontainers.appdomain.cloud/model/predict" -H "Content-Type: application/json"
