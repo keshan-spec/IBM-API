@@ -1,12 +1,12 @@
 import requests
 # 1) If parameter like this, use the create param method (RECOMMENDED)
-# PARAMS = ["In hindsight, I do apologize for my previous statement.", "HARSH NEGAVTIVE"]
+# PARAMS = ["In hindsight, I do apologize for my previous statement.", "HARSH NEGATIVE"]
 
 # 2) default parameter type, enclosed in single quotes with escaped strings
-# PARAMS = '{"text": ["In hindsight, I do apologize for my previous statement.", "HARSH NEGAVTIVE"]}'
+# PARAMS = '{"text": ["In hindsight, I do apologize for my previous statement.", "HARSH NEGATIVE"]}'
 
 # 3) If parameter has apostrophe's or any quotation, use an escape string
-# PARAMS = '{\"text\": [\"In hindsight, I do apologize for my previous statement.\", \"HARSH NEGAVTIVE\" ]}'
+# PARAMS = '{\"text\": [\"In hindsight, I do apologize for my previous statement.\", \"HARSH NEGATIVE\" ]}'
 
 
 class API:
@@ -111,6 +111,8 @@ class API:
     # prints the http codes definition
     @staticmethod
     def http_code(response):
+        if response is None:
+            return
         http_codes = {
             200: "Success",
             404: "Invalid URL page not found",

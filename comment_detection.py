@@ -1,11 +1,16 @@
 from api import API
 
+# IBM Toxic classifier model API
 PREDICT_URL = "http://max-toxic-comment-classifier.max.us-south.containers.appdomain.cloud/model/predict"
+# Initialize class
 api = API(PREDICT_URL)
+# Headers from the API Class
 headers = api.HEADERS
-param = api.create_param(["Something harsh", "I will kill you", "so ugly"])
+# Create parameters from the API Class method
+param = api.create_param(["That is good", "i wanna kill you", "you are ugly"])
+# Send a post request
 resp = api.post(param, headers)
-pred = api.get_predictions(resp)
-
-highest = api.get_highest_prediction(pred, show=True)
-print(highest.items())
+# Get the predictions from the response of the POST request
+predictions = api.get_predictions(resp)
+# Get the highest predictions
+highest = api.get_highest_prediction(predictions)
