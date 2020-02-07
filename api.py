@@ -1,4 +1,6 @@
 import requests
+
+
 # 1) If parameter like this, use the create param method (RECOMMENDED)
 # PARAMS = ["In hindsight, I do apologize for my previous statement.", "HARSH NEGATIVE"]
 
@@ -19,6 +21,7 @@ class API:
     def __init__(self, url):
         self.url = url
         self.data = {"text": []}
+        self.qna = {"paragraphs": [{}]}
 
     '''
     Send post request to url with data and headers
@@ -121,6 +124,40 @@ class API:
         }
         try:
             return http_codes.get(response, "Null")
+        except Exception as e:
+            print("Error : ", e)
+            return
+
+    '''
+    Custom class for the Question awnser api 
+    :arg: 
+        context : string, the context of the question
+        questions : list , the questions 
+    :return:
+        a json string
+    '''
+    def create_qna(self, context, questions):
+        self.qna["paragraphs"][0]["context"] = context
+        self.qna["paragraphs"][0]["questions"] = questions
+        data = str(self.qna).replace("'", '"')
+        return data
+
+    '''
+    Helper method to get answers from the API
+    :arg  
+        response : A requests object or a requests json object
+        show : bool (default false)
+    :return : a json object / dict
+    '''
+    def get_answers(self, response, show=False):
+        questions = self.qna["paragraphs"][0]["questions"]
+        if response is None:
+            print("[ERR] Empty object at get_answers()")
+            return
+        try:
+            if show:
+                [print(f'Q: "{questions[i]}"\nA: {res}\n') for i, res in enumerate(response.json()["predictions"][0])]
+            return response.json()["predictions"]
         except Exception as e:
             print("Error : ", e)
             return
