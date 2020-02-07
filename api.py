@@ -1,7 +1,4 @@
 import requests
-import math
-
-
 # 1) If parameter like this, use the create param method (RECOMMENDED)
 # PARAMS = ["In hindsight, I do apologize for my previous statement.", "HARSH NEGAVTIVE"]
 
@@ -31,9 +28,12 @@ class API:
     :return : a requests object 
     '''
     def post(self, data, headers=None):
-        response = requests.post(self.url, headers=headers, data=data)
-        print(f"Status code : {self.http_code(response.status_code)}")
-        return requests.post(self.url, headers=headers, data=data)
+        try:
+            response = requests.post(self.url, headers=headers, data=data)
+            print(f"Status code : {self.http_code(response.status_code)}")
+            return requests.post(self.url, headers=headers, data=data)
+        except requests.exceptions.ConnectionError:
+            print("[ERR] Connection error..")
 
     '''
     Send get request to url with params and headers
@@ -43,9 +43,12 @@ class API:
     :return : a requests object 
     '''
     def get(self, params, headers=None):
-        response = requests.get(self.url, headers=headers, params=params)
-        print(f"Status code : {self.http_code(response.status_code)}")
-        return response
+        try:
+            response = requests.get(self.url, headers=headers, params=params)
+            print(f"Status code : {self.http_code(response.status_code)}")
+            return response
+        except requests.exceptions.ConnectionError:
+            print("[ERR] Connection error..")
 
     '''
     Helper method to create parameters
@@ -66,6 +69,9 @@ class API:
         show : bool to show or hide the printing (default false)
     '''
     def get_highest_prediction(self, obj, show=False):
+        if obj is None:
+            print("[ERR] Empty object at get_highest_prediction()")
+            return
         highest = {}
         for i in range(len(obj)):
             # find the maximum value's key in the dict
@@ -91,11 +97,14 @@ class API:
     '''
     @staticmethod
     def get_predictions(response):
+        if response is None:
+            print("[ERR] Empty object at get_predictions()")
+            return
         try:
             return response["predictions"]
         except TypeError:
             return response.json()["predictions"]
-        except KeyError as e:
+        except Exception as e:
             print("Error : ", e)
             return
 
@@ -113,5 +122,3 @@ class API:
         except Exception as e:
             print("Error : ", e)
             return
-
-
