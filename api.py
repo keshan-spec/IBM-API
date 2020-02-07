@@ -3,13 +3,13 @@ import math
 
 
 # 1) If parameter like this, use the create param method (RECOMMENDED)
-# PARAMS = ["In hindsight, I do apologize for my previous statement.", "FUCK YOU"]
+# PARAMS = ["In hindsight, I do apologize for my previous statement.", "HARSH NEGAVTIVE"]
 
 # 2) default parameter type, enclosed in single quotes with escaped strings
-# PARAMS = '{"text": ["In hindsight, I do apologize for my previous statement.", "FUCK YOU"]}'
+# PARAMS = '{"text": ["In hindsight, I do apologize for my previous statement.", "HARSH NEGAVTIVE"]}'
 
 # 3) If parameter has apostrophe's or any quotation, use an escape string
-# PARAMS = '{\"text\": [\"In hindsight, I do apologize for my previous statement.\", \"FUCK YOU\" ]}'
+# PARAMS = '{\"text\": [\"In hindsight, I do apologize for my previous statement.\", \"HARSH NEGAVTIVE\" ]}'
 
 
 class API:
