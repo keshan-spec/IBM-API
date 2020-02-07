@@ -3,7 +3,9 @@ from api import API
 PREDICT_URL = "http://max-toxic-comment-classifier.max.us-south.containers.appdomain.cloud/model/predict"
 api = API(PREDICT_URL)
 headers = api.HEADERS
-param = api.create_param(["Toxic"])
+param = api.create_param(["Something harsh", "I will kill you", "so ugly"])
 resp = api.post(param, headers)
-pred = api.get_prediction(resp)
-print(pred)
+pred = api.get_predictions(resp)
+
+highest = api.get_highest_prediction(pred, show=True)
+print(highest.items())

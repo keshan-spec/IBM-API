@@ -1,4 +1,5 @@
 import requests
+import math
 
 
 # 1) If parameter like this, use the create param method (RECOMMENDED)
@@ -20,6 +21,7 @@ class API:
 
     def __init__(self, url):
         self.url = url
+        self.data = {"text": []}
 
     '''
     Send post request to url with data and headers
@@ -51,13 +53,35 @@ class API:
         param : A list of string
     :return : string 
     '''
-    @staticmethod
-    def create_param(param):
-        data = {"text": []}
+    def create_param(self, param):
         for i in param:
-            data["text"].append(i.replace("'", ""))
-        data = str(data).replace("'", '"')
+            self.data["text"].append(i.replace("'", ""))
+        data = str(self.data).replace("'", '"')
         return data
+
+    '''
+    returns the highest predictions of the parameters
+    :arg
+        obj : the requests object
+        show : bool to show or hide the printing (default false)
+    '''
+    def get_highest_prediction(self, obj, show=False):
+        highest = {}
+        for i in range(len(obj)):
+            # find the maximum value's key in the dict
+            max_ = max(obj[i], key=obj[i].get)
+            # get the positional text given as parameter as the key for the
+            # highest prediction
+            highest[self.data["text"][i]] = max_ if float(obj[i][max_] * 100) > 1 else "NONE"
+
+            # prints the dict
+            if show:
+                print(f"'{self.data['text'][i]}'")
+                print("-----------------------------")
+                for key, value in obj[i].items():
+                    print(f"{key} : {round(float(value) * 100, 2)}%")
+                print("")
+        return highest
 
     '''
     Helper method to get predictions from the API
@@ -66,14 +90,14 @@ class API:
     :return : a json object / dict
     '''
     @staticmethod
-    def get_prediction(response):
+    def get_predictions(response):
         try:
             return response["predictions"]
-        except TypeError as e:
+        except TypeError:
             return response.json()["predictions"]
         except KeyError as e:
             print("Error : ", e)
-            pass
+            return
 
     # prints the http codes definition
     @staticmethod
@@ -89,3 +113,5 @@ class API:
         except Exception as e:
             print("Error : ", e)
             return
+
+
