@@ -22,7 +22,7 @@ def main(data):
     # Get the predictions from the response of the POST request
     predictions = api.get_predictions(resp)
     # Get the highest predictions
-    highest = api.get_highest_prediction(predictions)
+    highest = api.get_highest_prediction(predictions, show=True)
     # print the highest prediction
     print(highest)
 
