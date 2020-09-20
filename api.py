@@ -1,163 +1,129 @@
-import requests
+import os, json
+from dotenv import load_dotenv
 
+from ibm_watson import ToneAnalyzerV3
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
-# 1) If parameter like this, use the create param method (RECOMMENDED)
-# PARAMS = ["In hindsight, I do apologize for my previous statement.", "HARSH NEGATIVE"]
+# GET ENV VARS
+load_dotenv()
+API_KEY = os.getenv('API_KEY')
+URL = os.getenv('URL')
 
-# 2) default parameter type, enclosed in single quotes with escaped strings
-# PARAMS = '{"text": ["In hindsight, I do apologize for my previous statement.", "HARSH NEGATIVE"]}'
+# AUTH 
+authenticator = IAMAuthenticator(API_KEY)
+tone_analyzer = ToneAnalyzerV3(
+    version='2017-09-21',
+    authenticator=authenticator
+)
 
-# 3) If parameter has apostrophe's or any quotation, use an escape string
-# PARAMS = '{\"text\": [\"In hindsight, I do apologize for my previous statement.\", \"HARSH NEGATIVE\" ]}'
+tone_analyzer.set_service_url(URL)
 
+utterances = [
+     "Hello, I'm having a problem with your product.",
+     "OK, let me know what's going on, please.",
+    "Well, nothing is working :(",
+    "Sorry to hear that.",
+]
 
-class API:
-    # DEFAULT HEADER TYPE FOR APIs
-    HEADERS = {
-        "accept": "application/json",
-        "Content-Type": "application/json"
-    }
+text = 'Team, I know that times are tough! Product '\
+    'sales have been disappointing for the past three '\
+    'quarters. We have a competitive product, but we '\
+    'need to do a better job of selling it!'
 
-    def __init__(self, url):
-        self.url = url
-        self.data = {"text": []}
-        self.qna = {"paragraphs": [{}]}
+'''
+returns a dict/ json
+:arg
+    text : the string to be processed
+    verbose : bool to get detailed stats (default false)
+'''
+def analyse_tone(text: str, verbose: bool = False):
+    mod_obj = {}
+    sentences = []
 
-    '''
-    Send post request to url with data and headers
-    :arg 
-        data : a data string formatted correctly to suit the APIs requirement (USE create_param method)
-        headers : a dict of headers (Default none)
-    :return : a requests object 
-    '''
-    def post(self, data, headers=None):
-        try:
-            response = requests.post(self.url, headers=headers, data=data)
-            print(f"Status code : {self.http_code(response.status_code)}")
-            return requests.post(self.url, headers=headers, data=data)
-        except requests.exceptions.ConnectionError:
-            print("[ERR] Connection error..")
+    obj = tone_analyzer.tone(
+        {'text': text},
+        sentences=verbose,
+        content_type='application/json'
+    )
+    result = obj.get_result()
+    status = obj.get_status_code()
 
-    '''
-    Send get request to url with params and headers
-    :arg 
-        params : a data string formatted correctly to suit the APIs requirement (USE create_param method)
-        headers : a dict of headers (Default none)
-    :return : a requests object 
-    '''
-    def get(self, params, headers=None):
-        try:
-            response = requests.get(self.url, headers=headers, params=params)
-            print(f"Status code : {self.http_code(response.status_code)}")
-            return response
-        except requests.exceptions.ConnectionError:
-            print("[ERR] Connection error..")
+    if status == 200:
+        if verbose:
+            try:
+                for item in result["sentences_tone"]:
+                    tones = {}
+                    for i in item["tones"]:
+                        tones[i["tone_name"]] = i["score"]
+                    
+                    sentences.append({"sentence": item["text"], "tones": tones})
+                
+                mod_obj["result"] = {
+                    "sentences": sentences
+                }
+            except KeyError:
+                pass
+        
+        doc_tone = {}
+        for i in result["document_tone"]["tones"]:
+            doc_tone[i["tone_name"]] = i["score"]
 
-    '''
-    Helper method to create parameters
-    :arg  
-        param : A list of string
-    :return : string 
-    '''
-    def create_param(self, param):
-        for i in param:
-            self.data["text"].append(i.replace("'", ""))
-        data = str(self.data).replace("'", '"')
-        return data
-
-    '''
-    returns the highest predictions of the parameters
-    :arg
-        obj : the requests object
-        show : bool to show or hide the printing (default false)
-    '''
-    def get_highest_prediction(self, obj, show=False):
-        if obj is None:
-            print("[ERR] Empty object at get_highest_prediction()")
-            return
-        highest = {}
-        for i in range(len(obj)):
-            # find the maximum value's key in the dict
-            max_ = max(obj[i], key=obj[i].get)
-            # get the positional text given as parameter as the key for the
-            # highest prediction
-            highest[self.data["text"][i]] = max_ if float(obj[i][max_] * 100) > 1 else "NONE"
-
-            # prints the dict
-            if show:
-                print(f"'{self.data['text'][i]}'")
-                print("-----------------------------")
-                for key, value in obj[i].items():
-                    print(f"{key} : {round(float(value) * 100, 2)}%")
-                print("")
-        return highest
-
-    '''
-    Helper method to get predictions from the API
-    :arg  
-        response : A requests object or a requests json object
-    :return : a json object / dict
-    '''
-    @staticmethod
-    def get_predictions(response):
-        if response is None:
-            print("[ERR] Empty object at get_predictions()")
-            return
-        try:
-            return response["predictions"]
-        except TypeError:
-            return response.json()["predictions"]
-        except Exception as e:
-            print("Error : ", e)
-            return
-
-    # prints the http codes definition
-    @staticmethod
-    def http_code(response):
-        if response is None:
-            return
-        http_codes = {
-            200: "Success",
-            404: "Invalid URL page not found",
-            400: "The browser (or proxy) sent a request that this server could not understand",
-            405: "Restricted",
+        mod_obj["result"] = {
+            "status": status,
+            "overall": doc_tone
         }
-        try:
-            return http_codes.get(response, "Null")
-        except Exception as e:
-            print("Error : ", e)
-            return
+        return mod_obj
+    return status    
 
-    '''
-    Custom class for the Question awnser api 
-    :arg: 
-        context : string, the context of the question
-        questions : list , the questions 
-    :return:
-        a json string
-    '''
-    def create_qna(self, context, questions):
-        self.qna["paragraphs"][0]["context"] = context
-        self.qna["paragraphs"][0]["questions"] = questions
-        data = str(self.qna).replace("'", '"')
-        return data
 
-    '''
-    Helper method to get answers from the API
-    :arg  
-        response : A requests object or a requests json object
-        show : bool (default false)
-    :return : a json object / dict
-    '''
-    def get_answers(self, response, show=False):
-        questions = self.qna["paragraphs"][0]["questions"]
-        if response is None:
-            print("[ERR] Empty object at get_answers()")
-            return
-        try:
-            if show:
-                [print(f'Q: "{questions[i]}"\nA: {res}\n') for i, res in enumerate(response.json()["predictions"][0])]
-            return response.json()["predictions"]
-        except Exception as e:
-            print("Error : ", e)
-            return
+'''
+returns a dict/ json
+:arg
+    text : the string to be processed
+'''
+def analyse_chat(text: str):
+    mod_obj = {}
+    tones = {}
+
+    obj = tone_analyzer.tone_chat(
+       [{'text': text}]
+    )
+
+    result = obj.get_result()
+    status = obj.get_status_code()
+
+    if status == 200:
+        tmp = result["utterances_tone"][0]
+
+        for i in tmp["tones"]:
+            tones[i["tone_name"]] = i["score"]
+
+        mod_obj["result"] = {
+            "status": status,
+            "text": tmp["utterance_text"],
+            "tones": tones
+        }
+        return mod_obj
+    return status
+
+
+
+'''
+-- prints the http codes definition
+:arg
+    response: response code number
+'''
+def http_code(response):
+    if response is None:
+        return
+    http_codes = {
+        200: "Success",
+        404: "Invalid URL page not found",
+        400: "The browser (or proxy) sent a request that this server could not understand",
+        405: "Restricted",
+    }
+    try:
+        return http_codes.get(response, "Null")
+    except Exception as e:
+        print("Error : ", e)
+        return
